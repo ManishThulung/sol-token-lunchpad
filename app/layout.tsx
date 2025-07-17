@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/navbar";
+import { AccountContextProvider } from "@/context/active-account-context";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -20,9 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`max-w-[1440px] m-auto my-10 ${geistMono.variable} antialiased`}
+        className={`max-w-[1280px] m-auto my-10 ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AccountContextProvider>
+          <Navbar />
+          {children}
+        </AccountContextProvider>
       </body>
     </html>
   );

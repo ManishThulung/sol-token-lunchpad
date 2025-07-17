@@ -1,5 +1,4 @@
-import React from "react";
-import { generateMnemonic, mnemonicToSeedSync } from "bip39";
+import Mnemonics from "@/components/mnemonics";
 import {
   Accordion,
   AccordionContent,
@@ -7,12 +6,18 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import CreateWallet from "@/components/wallet/create-wallet";
+import { generateMnemonic, mnemonicToSeedSync } from "bip39";
+import bs58 from "bs58";
+import { getCookie } from "cookies-next/server";
+import { cookies } from "next/headers";
 
-const page = () => {
+const page = async () => {
+  const cookie = await getCookie("mnemonic", { cookies });
   // Generate a 12-word mnemonic
-  const mnemonic = generateMnemonic(128);
+  const mnemonic = cookie ? cookie : generateMnemonic(128);
   const seed = mnemonicToSeedSync(mnemonic);
-  const mnemonicPhrase = mnemonic.split(/\s+/);
+  const encodedSeed = bs58.encode(seed);
+
   return (
     <div>
       <Accordion type="single" collapsible>
@@ -21,18 +26,11 @@ const page = () => {
             Mnemonic Phrase (Keep it extra secret)
           </AccordionTrigger>
           <AccordionContent className="max-w-6xl m-auto grid grid-cols-4 gap-8">
-            {mnemonicPhrase.map((phrase, i) => (
-              <div
-                key={phrase}
-                className="flex gap-2 justify-start items-center bg-black px-8 py-4 text-white rounded-lg text-xl font-semibold"
-              >
-                <span>{i + 1}.</span> <span>{phrase}</span>
-              </div>
-            ))}
+            <Mnemonics mnemonic={mnemonic} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      <CreateWallet seed={seed} />
+      <CreateWallet encodedSeed={encodedSeed} />
     </div>
   );
 };
