@@ -12,12 +12,18 @@ import { getCookie } from "cookies-next/server";
 import { cookies } from "next/headers";
 
 const page = async () => {
-  const cookie = await getCookie("mnemonic", { cookies });
-  // Generate a 12-word mnemonic
-  const mnemonic = cookie ? cookie : generateMnemonic(128);
+  // const cookie = await getCookie("mnemonic", { cookies });
+  // // Generate a 12-word mnemonic
+  // const mnemonic = cookie ? cookie : generateMnemonic(128);
+
+  // const mnemonic = generateMnemonic(128);
+
+  const mnemonic =
+    "swallow minute mesh buddy dust puzzle youth crew shrimp slight runway tonight";
   const seed = mnemonicToSeedSync(mnemonic);
   const encodedSeed = bs58.encode(seed);
-
+  console.log(seed, "seedseed");
+  console.log(encodedSeed, "encodedSeed");
   return (
     <div>
       <Accordion type="single" collapsible>
