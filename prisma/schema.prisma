@@ -16,6 +16,7 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deleteAt  DateTime?
+  platform  LoginPlatform?
 
   tokens    SolanaToken[]
 }
@@ -25,31 +26,20 @@ model SolanaToken {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Owner / creator
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Solana token information
-  mintAddress    String? @unique
+  mintAddress    String @unique
   mintAuthority  String
   decimals       Int
-
-  // Token metadata
-  name        String
-  symbol      String
-  description String
-  imageUrl    String
-  metadataUri String? @unique
-
-  // Authority configuration
-  revokeFreeze Boolean @default(false)
-
-  // Optional status
-  status SolanaTokenStatus @default(PENDING)
+  name           String
+  symbol         String
+  description    String?
+  imageUrl       String?
+  revokeFreeze   Boolean @default(false)
 }
 
-enum SolanaTokenStatus {
-  PENDING
-  CREATED
-  FAILED
+
+enum LoginPlatform {
+  GOOGLE
 }

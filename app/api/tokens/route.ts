@@ -7,14 +7,13 @@ export async function POST(request: NextRequest) {
 
     const {
       mintAddress,
+      mintAuthority,
+      decimals,
       name,
       symbol,
-      uri,
-      decimals,
-      supply,
-      mintAuthority,
-      freezeAuthority,
-      ownerAddress,
+      description,
+      imageUrl,
+      revokeFreeze,
     } = body;
 
     if (!mintAddress || !name || !symbol || decimals === undefined) {
@@ -32,25 +31,26 @@ export async function POST(request: NextRequest) {
         mintAddress,
       },
       update: {
+        userId: "sdfs",
+        mintAddress,
+        mintAuthority,
+        decimals,
         name,
         symbol,
-        uri,
-        decimals,
-        supply,
-        mintAuthority,
-        freezeAuthority,
-        ownerAddress,
+        description,
+        imageUrl,
+        revokeFreeze,
       },
       create: {
+        userId: "sdfs",
         mintAddress,
+        mintAuthority,
+        decimals,
         name,
         symbol,
-        uri,
-        decimals,
-        supply,
-        mintAuthority,
-        freezeAuthority,
-        ownerAddress,
+        description,
+        imageUrl,
+        revokeFreeze,
       },
     });
 

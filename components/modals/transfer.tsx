@@ -132,7 +132,6 @@ const Transfer = ({
   };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    // createTransferCheckedInstruction() -> to transfer existing token
     try {
       if (!publicKey) throw new WalletNotConnectedError();
 

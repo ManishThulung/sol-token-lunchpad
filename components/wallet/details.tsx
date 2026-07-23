@@ -12,6 +12,7 @@ import { getSolBalance } from "@/lib/sol";
 import { useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
+import { PublicKey } from "@solana/web3.js";
 
 const WalletDetail = ({
   publicKey,
@@ -24,7 +25,7 @@ const WalletDetail = ({
 
   useEffect(() => {
     const getBalance = async () => {
-      const balance = await getSolBalance(publicKey);
+      const balance = await getSolBalance(new PublicKey(publicKey));
       setBalance(balance);
     };
     getBalance();
