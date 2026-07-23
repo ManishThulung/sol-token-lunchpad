@@ -1,44 +1,43 @@
-import Mnemonics from "@/components/mnemonics";
+"use client";
+
+import Transfer from "@/components/modals/transfer";
+import Detail from "@/components/wallet-adapter/detail";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import CreateWallet from "@/components/wallet/create-wallet";
-import { generateMnemonic, mnemonicToSeedSync } from "bip39";
-import bs58 from "bs58";
-import { getCookie } from "cookies-next/server";
-import { cookies } from "next/headers";
+  WalletDisconnectButton,
+  WalletMultiButton,
+} from "@solana/wallet-adapter-react-ui";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useEffect, useState } from "react";
 
-const page = async () => {
-  // const cookie = await getCookie("mnemonic", { cookies });
-  // // Generate a 12-word mnemonic
-  // const mnemonic = cookie ? cookie : generateMnemonic(128);
+export default function Wallet() {
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
 
-  // const mnemonic = generateMnemonic(128);
+  const [balance, setBalance] = useState<number | null>(null);
 
-  const mnemonic =
-    "swallow minute mesh buddy dust puzzle youth crew shrimp slight runway tonight";
-  const seed = mnemonicToSeedSync(mnemonic);
-  const encodedSeed = bs58.encode(seed);
-  console.log(seed, "seedseed");
-  console.log(encodedSeed, "encodedSeed");
+  useEffect(() => {
+    if (!publicKey) return;
+
+    const getBalance = async () => {
+      const balance = await connection.getBalance(publicKey);
+      setBalance(balance / LAMPORTS_PER_SOL);
+    };
+    getBalance();
+  }, [publicKey]);
   return (
-    <div>
-      <Accordion type="single" collapsible>
-        <AccordionItem value="item-1">
-          <AccordionTrigger>
-            Mnemonic Phrase (Keep it extra secret)
-          </AccordionTrigger>
-          <AccordionContent className="max-w-6xl m-auto grid grid-cols-4 gap-8">
-            <Mnemonics mnemonic={mnemonic} />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-      <CreateWallet encodedSeed={encodedSeed} />
+    <div className="flex gap-20 flex-col">
+      <div className="flex justify-between items-center">
+        {publicKey && (
+          <p className="min-w-60 text-lg font-bold">Balance: {balance} SOL</p>
+        )}
+        <div className="flex gap-4 w-full justify-end">
+          {publicKey && <Transfer type="SOL" title="Transfer" />}
+          <WalletMultiButton />
+          <WalletDisconnectButton />
+        </div>
+      </div>
+      <Detail />
     </div>
   );
-};
-
-export default page;
+}

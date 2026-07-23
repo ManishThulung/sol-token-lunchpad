@@ -35,8 +35,9 @@ export default function RootLayout({
   const network = WalletAdapterNetwork.Devnet;
 
   // You can also provide a custom RPC endpoint.
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  // const endpoint =
+  // const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint =
+    "https://devnet.helius-rpc.com/?api-key=71dda314-5441-4da2-9a7a-d98ff4d687f1";
   //   "https://solana-devnet.g.alchemy.com/v2/WxwNdho-ZdqTnNUxBa2rF";
 
   const wallets = useMemo(
@@ -63,18 +64,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`max-w-[1280px] m-auto my-10 ${geistMono.variable} antialiased`}
+        className={`max-w-[1280px] m-auto my-5 ${geistMono.variable} antialiased`}
       >
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
-              {children}
-
-              {/* <WalletMultiButton />
-              <WalletDisconnectButton />
-              <AirdropSol />
-              <Detail /> */}
-            </WalletModalProvider>
+            <WalletModalProvider>{children}</WalletModalProvider>
           </WalletProvider>
         </ConnectionProvider>
         {/* <AccountContextProvider>

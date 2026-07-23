@@ -7,7 +7,7 @@ import { useState } from "react";
 import nacl from "tweetnacl";
 import { Button } from "../ui/button";
 import Account from "./account";
-import Transfer from "./transfer-sol";
+import Transfer from "./transfer-sol-raw";
 import WalletDetail from "./details";
 
 type WalletAccount = {
