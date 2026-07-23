@@ -165,11 +165,11 @@ const TokenMint = () => {
   const onSubmit = async (values: FormValues) => {
     try {
       if (!publicKey) throw new WalletNotConnectedError();
+      const mintKeypair = Keypair.generate();
+
       const name = values.name;
       const symbol = values.symbol;
-      const uri = "https://rag-chat-lilac.vercel.app/api/metadata/brow";
-
-      const mintKeypair = Keypair.generate();
+      const uri = `https://sol-token-lunchpad-rho.vercel.app/api/tokens/${mintKeypair.publicKey}/metadata`;
 
       // Calculate metadata size
       const metadata = {

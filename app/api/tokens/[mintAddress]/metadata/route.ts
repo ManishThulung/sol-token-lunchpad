@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/prisma/db";
+import { NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
   params: Promise<{
@@ -28,12 +28,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     return NextResponse.json({
-      success: true,
-      data: token,
+      name: token.name,
+      symbol: token.symbol,
+      description: token.description,
+      image: token.imageUrl,
     });
   } catch (error) {
-    console.error("Error fetching token:", error);
-
     return NextResponse.json(
       {
         success: false,
