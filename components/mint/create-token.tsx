@@ -111,11 +111,11 @@ const TokenMint = () => {
         "upload_preset",
         process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
       );
-
+      formData.append("folder", "token-lunchpad");
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload/token-lunchpad`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
           method: "POST",
           body: formData,

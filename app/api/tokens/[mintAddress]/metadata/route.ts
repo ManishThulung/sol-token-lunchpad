@@ -1,4 +1,4 @@
-import { prisma } from "@/prisma/db";
+import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
