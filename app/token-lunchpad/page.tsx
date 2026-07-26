@@ -3,14 +3,15 @@
 import TokenMint from "@/components/mint/create-token";
 import Transfer from "@/components/modals/transfer";
 import { calculateLamports } from "@/lib/lamport";
+import { TokenAsset } from "@/types/token";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Page = () => {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
-  const [accounts, setAccounts] = useState();
+  const [tokens, setTokens] = useState<TokenAsset[]>([]);
 
   const getMyMintAuthorityTokens = async () => {
     if (!publicKey) {
@@ -48,34 +49,34 @@ const Page = () => {
           asset.mint_extensions?.metadata?.update_authority === authority ||
           asset.mint_extensions?.metadata_pointer?.authority === authority),
     );
-    setAccounts(tokens);
+    setTokens(tokens);
     return tokens;
   };
 
-  // useEffect(() => {
-  //   if (!publicKey) return;
-  //   // const getMyAccounts = async () => {
-  //   //   const accounts = await connection.getProgramAccounts(
-  //   //     TOKEN_2022_PROGRAM_ID,
-  //   //     {
-  //   //       filters: [
-  //   //         {
-  //   //           memcmp: {
-  //   //             offset: 4,
-  //   //             bytes: publicKey.toBase58(),
-  //   //           },
-  //   //         },
-  //   //       ],
-  //   //     },
-  //   //   );
-  //   //   console.log(accounts, "accountsaccounts");
-  //   //   setAccounts(accounts);
-  //   // };
+  useEffect(() => {
+    if (!publicKey) return;
+    // const getMyAccounts = async () => {
+    //   const accounts = await connection.getProgramAccounts(
+    //     TOKEN_2022_PROGRAM_ID,
+    //     {
+    //       filters: [
+    //         {
+    //           memcmp: {
+    //             offset: 4,
+    //             bytes: publicKey.toBase58(),
+    //           },
+    //         },
+    //       ],
+    //     },
+    //   );
+    //   console.log(accounts, "accountsaccounts");
+    //   setAccounts(accounts);
+    // };
 
-  //   // getMyAccounts();
+    // getMyAccounts();
 
-  //   getMyMintAuthorityTokens();
-  // }, [publicKey]);
+    // getMyMintAuthorityTokens();
+  }, [publicKey]);
 
   // useEffect(() => {
   //   if (!publicKey) return;
@@ -171,100 +172,16 @@ const Page = () => {
   //         asset.mint_extensions?.metadata?.update_authority === authority ||
   //         asset.mint_extensions?.metadata_pointer?.authority === authority),
   //   );
-  //   setAccounts(tokens as any);
+  //   setTokens(tokens ?? []);
   // }, [publicKey]);
-
-  const items = [
-    {
-      interface: "FungibleToken",
-      id: "3oZ9VVP74ktXHsubJ5DznyYWHunj4UnMz5vTqrFnwt16",
-      content: {
-        $schema: "https://schema.metaplex.com/nft1.0.json",
-        json_uri: "https://rag-chat-lilac.vercel.app/api/metadata/brow",
-        files: [
-          {
-            uri: "https://appsha-bucket.s3.us-east-1.amazonaws.com/1784373637175-cropped.jpg",
-            cdn_uri:
-              "https://cdn.helius-rpc.com/cdn-cgi/image//https://appsha-bucket.s3.us-east-1.amazonaws.com/1784373637175-cropped.jpg",
-            mime: "image/jpeg",
-          },
-        ],
-        metadata: {
-          description: "My custom token",
-          json_name: "TOKEN BROW",
-          name: "TOKEN BROW",
-          symbol: "BROW",
-        },
-        links: {
-          image:
-            "https://appsha-bucket.s3.us-east-1.amazonaws.com/1784373637175-cropped.jpg",
-        },
-      },
-      authorities: [
-        {
-          address: "4wXY2KfvuwjLaCX7SsB1d8cmKKoyjdqRWX84mBr7gFJ5",
-          scopes: ["metadata"],
-        },
-      ],
-      compression: {
-        eligible: false,
-        compressed: false,
-        data_hash: "",
-        creator_hash: "",
-        asset_hash: "",
-        tree: "",
-        seq: 0,
-        leaf_id: 0,
-      },
-      grouping: [],
-      royalty: {
-        royalty_model: "creators",
-        target: null,
-        percent: 0,
-        basis_points: 0,
-        primary_sale_happened: false,
-        locked: false,
-      },
-      creators: [],
-      ownership: {
-        frozen: false,
-        delegated: false,
-        delegate: null,
-        ownership_model: "token",
-        owner: "",
-      },
-      supply: null,
-      mutable: true,
-      burnt: false,
-      mint_extensions: {
-        metadata: {
-          uri: "https://rag-chat-lilac.vercel.app/api/metadata/brow",
-          mint: "3oZ9VVP74ktXHsubJ5DznyYWHunj4UnMz5vTqrFnwt16",
-          name: "TOKEN BROW",
-          symbol: "BROW",
-          update_authority: "4wXY2KfvuwjLaCX7SsB1d8cmKKoyjdqRWX84mBr7gFJ5",
-          additional_metadata: [],
-        },
-        metadata_pointer: {
-          authority: "4wXY2KfvuwjLaCX7SsB1d8cmKKoyjdqRWX84mBr7gFJ5",
-          metadata_address: "3oZ9VVP74ktXHsubJ5DznyYWHunj4UnMz5vTqrFnwt16",
-        },
-      },
-      token_info: {
-        supply: 110000000000,
-        decimals: 9,
-        token_program: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-      },
-    },
-  ];
 
   return (
     <div className="flex gap-6 flex-col">
       <TokenMint />
 
       <div className="flex flex-col gap-4">
-        {items &&
-          items?.map((token) => {
+        {tokens &&
+          tokens?.map((token) => {
             const lamports = calculateLamports(token.token_info.decimals);
             const totalSupply = token.token_info.supply / lamports;
 

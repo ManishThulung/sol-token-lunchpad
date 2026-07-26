@@ -7,15 +7,23 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import {
-  PhantomWalletAdapter,
-  UnsafeBurnerWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+  WalletDisconnectButton,
+  WalletModalProvider,
+  WalletMultiButton,
+} from "@solana/wallet-adapter-react-ui";
+import "@solana/wallet-adapter-react-ui/styles.css";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { Geist_Mono } from "next/font/google";
 import { useMemo } from "react";
 import "./globals.css";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import "@solana/wallet-adapter-react-ui/styles.css";
-import { clusterApiUrl } from "@solana/web3.js";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import AppNavbar from "@/components/navbar/app-navbar";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -64,13 +72,32 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`max-w-[1280px] m-auto my-5 ${geistMono.variable} antialiased`}
+        // className={`max-w-[1440px] m-auto my-5 ${geistMono.variable} antialiased`}
+        className={`w-full m-auto ${geistMono.variable} antialiased`}
       >
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>{children}</WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="m-6 flex gap-20 flex-col">
+            {/* <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+              <div className="flex items-center gap-2 px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4"
+                />
+              </div>
+            </header> */}
+            <ConnectionProvider endpoint={endpoint}>
+              <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
+                  <AppNavbar />
+                  {children}
+                </WalletModalProvider>
+              </WalletProvider>
+            </ConnectionProvider>
+          </SidebarInset>
+        </SidebarProvider>
+
         {/* <AccountContextProvider>
           <Navbar />
           {children}

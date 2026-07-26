@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import SubmitButton from "@/components/ui/submit-button";
 import { calculateLamports } from "@/lib/lamport";
+import { createOrGetATA } from "@/lib/wallet";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -70,7 +71,7 @@ const Transfer = ({
   decimals?: number;
 }) => {
   const { connection } = useConnection();
-  const { publicKey, connected, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -79,57 +80,6 @@ const Transfer = ({
       amount: 0,
     },
   });
-
-  const createOrGetATA = async (recipient: PublicKey, mint: PublicKey) => {
-    try {
-      if (!publicKey || !connected) throw new WalletNotConnectedError();
-      // Derive ATA
-      const ata = await getAssociatedTokenAddress(
-        mint,
-        recipient,
-        false,
-        TOKEN_2022_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-      );
-
-      // Check whether ATA already exists
-      const accountInfo = await connection.getAccountInfo(ata);
-
-      if (accountInfo) {
-        console.log("ATA already exists:", ata.toBase58());
-        return ata;
-      }
-
-      // Create ATA
-      const transaction = new Transaction().add(
-        createAssociatedTokenAccountInstruction(
-          publicKey, // payer
-          ata, // recipient associated token account
-          recipient, // recipient
-          mint, // mint
-          TOKEN_2022_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-        ),
-      );
-
-      const signature = await sendTransaction(transaction, connection);
-
-      const {
-        value: { blockhash, lastValidBlockHeight },
-      } = await connection.getLatestBlockhashAndContext();
-      await connection.confirmTransaction(
-        { signature, blockhash, lastValidBlockHeight },
-        "confirmed",
-      );
-
-      console.log("ATA created:", ata.toBase58());
-
-      return ata;
-    } catch (error) {
-      console.log(error, "ata error");
-      throw error;
-    }
-  };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
@@ -167,10 +117,19 @@ const Transfer = ({
         }
         const mintPublicKey = new PublicKey(mint);
         const recipientAta = await createOrGetATA(
+          connection,
+          sendTransaction,
+          publicKey,
           new PublicKey(data.address),
           mintPublicKey,
         );
-        const payerAta = await createOrGetATA(publicKey, mintPublicKey);
+        const payerAta = await createOrGetATA(
+          connection,
+          sendTransaction,
+          publicKey,
+          publicKey,
+          mintPublicKey,
+        );
         const lamports = calculateLamports(decimals);
 
         const transaction = new Transaction({
@@ -203,9 +162,13 @@ const Transfer = ({
           toast.error("Mint address is required!");
           return;
         }
+        console.log(publicKey.toBase58(), "dddddddddddddddddddddddd");
         const mintPublicKey = new PublicKey(mint);
 
         const ata = await createOrGetATA(
+          connection,
+          sendTransaction,
+          publicKey,
           new PublicKey(data.address),
           mintPublicKey,
         );

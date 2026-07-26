@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    const userId = "cmrytqy3k0000coki3g49c119";
     const {
       mintAddress,
       mintAuthority,
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
         mintAddress,
       },
       update: {
-        userId: "sdfs",
+        userId,
         mintAddress,
         mintAuthority,
         decimals,
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         revokeFreeze,
       },
       create: {
-        userId: "sdfs",
+        userId,
         mintAddress,
         mintAuthority,
         decimals,

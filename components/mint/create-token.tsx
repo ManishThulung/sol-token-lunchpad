@@ -1,24 +1,6 @@
 "use client";
 
 import {
-  createInitializeInstruction,
-  createInitializeMetadataPointerInstruction,
-  createInitializeMintInstruction,
-  ExtensionType,
-  getMintLen,
-  LENGTH_SIZE,
-  TOKEN_2022_PROGRAM_ID,
-  TYPE_SIZE,
-} from "@solana/spl-token";
-import { pack } from "@solana/spl-token-metadata";
-import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
-import { toast } from "sonner";
-import { Button } from "../ui/button";
-
-import { DialogClose } from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -28,12 +10,38 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import SubmitButton from "@/components/ui/submit-button";
+import { calculateLamports } from "@/lib/lamport";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import z from "zod";
-import { Switch } from "../ui/switch";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  AuthorityType,
+  createAssociatedTokenAccountInstruction,
+  createInitializeInstruction,
+  createInitializeMetadataPointerInstruction,
+  createInitializeMintInstruction,
+  createMintToCheckedInstruction,
+  createSetAuthorityInstruction,
+  ExtensionType,
+  getAssociatedTokenAddressSync,
+  getMintLen,
+  LENGTH_SIZE,
+  TOKEN_2022_PROGRAM_ID,
+  TYPE_SIZE,
+} from "@solana/spl-token";
+import {
+  createUpdateAuthorityInstruction,
+  pack,
+} from "@solana/spl-token-metadata";
+import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import { ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import z from "zod";
+import { Button } from "../ui/button";
 import {
   Card,
   CardContent,
@@ -41,8 +49,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
@@ -58,11 +65,7 @@ const formSchema = z.object({
     .string()
     .min(5, "Description must be at least 5 characters.")
     .max(100, "Description must be at most 100 characters."),
-  imageUrl: z
-    .string()
-    .url()
-    .min(5, "Description must be at least 5 characters.")
-    .max(100, "Description must be at most 100 characters."),
+  imageUrl: z.url(),
   decimals: z.coerce
     .number({
       message: "Decimals must be a number.",
@@ -70,7 +73,15 @@ const formSchema = z.object({
     .int("Decimals must be a whole number.")
     .min(0)
     .max(18),
+  supply: z.coerce
+    .number({
+      message: "Supply must be a number.",
+    })
+    .int("Supplu must be a whole number.")
+    .min(1),
   revokeFreeze: z.boolean(),
+  revokeMint: z.boolean(),
+  revokeMetadataUpdate: z.boolean(),
 });
 type FormValues = {
   name: string;
@@ -79,6 +90,9 @@ type FormValues = {
   imageUrl: string;
   decimals: number;
   revokeFreeze: boolean;
+  supply: number;
+  revokeMint: boolean;
+  revokeMetadataUpdate: boolean;
 };
 
 const TokenMint = () => {
@@ -95,8 +109,11 @@ const TokenMint = () => {
       symbol: "",
       description: "",
       imageUrl: "",
-      decimals: 9,
+      decimals: 6,
       revokeFreeze: false,
+      supply: 1,
+      revokeMint: false,
+      revokeMetadataUpdate: false,
     },
   });
 
@@ -169,7 +186,25 @@ const TokenMint = () => {
 
       const name = values.name;
       const symbol = values.symbol;
-      const uri = `https://sol-token-lunchpad-rho.vercel.app/api/tokens/${mintKeypair.publicKey}/metadata`;
+      const uri = `https://sol-token-lunchpad-rho.vercel.app/api/tokens/${mintKeypair.publicKey.toBase58()}/metadata`;
+
+      const payload = {
+        mintAddress: mintKeypair.publicKey.toBase58(),
+        mintAuthority: publicKey.toBase58(),
+        decimals: values.decimals,
+        name,
+        symbol,
+        description: values.description,
+        imageUrl: values.imageUrl,
+        revokeFreeze: values.revokeFreeze,
+      };
+      await fetch("/api/tokens", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       // Calculate metadata size
       const metadata = {
@@ -182,17 +217,24 @@ const TokenMint = () => {
       };
 
       const mintSpace = getMintLen([ExtensionType.MetadataPointer]);
-
       const metadataSpace = TYPE_SIZE + LENGTH_SIZE + pack(metadata).length;
-
       const totalSpace = mintSpace + metadataSpace;
-
       const mintRent =
         await connection.getMinimumBalanceForRentExemption(totalSpace);
+      const lamports = calculateLamports(values.decimals);
 
       const {
         value: { blockhash, lastValidBlockHeight },
       } = await connection.getLatestBlockhashAndContext();
+
+      // derive ata
+      const ata = getAssociatedTokenAddressSync(
+        mintKeypair.publicKey,
+        publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      );
 
       const transaction = new Transaction({
         blockhash,
@@ -219,9 +261,9 @@ const TokenMint = () => {
         // initialize mint
         createInitializeMintInstruction(
           mintKeypair.publicKey,
-          9,
+          values.decimals,
           publicKey,
-          null,
+          values.revokeFreeze ? null : publicKey,
           TOKEN_2022_PROGRAM_ID,
         ),
 
@@ -236,6 +278,53 @@ const TokenMint = () => {
           symbol,
           uri,
         }),
+
+        // create ata
+        createAssociatedTokenAccountInstruction(
+          publicKey,
+          ata,
+          publicKey,
+          mintKeypair.publicKey,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+        ),
+
+        // token mint
+        createMintToCheckedInstruction(
+          mintKeypair.publicKey,
+          ata,
+          publicKey,
+          values.supply * lamports,
+          values.decimals,
+          [],
+          TOKEN_2022_PROGRAM_ID,
+        ),
+
+        // Revoke mint authority
+        ...(values.revokeMint
+          ? [
+              createSetAuthorityInstruction(
+                mintKeypair.publicKey,
+                publicKey,
+                AuthorityType.MintTokens,
+                null,
+                [],
+                TOKEN_2022_PROGRAM_ID,
+              ),
+            ]
+          : []),
+
+        // Revoke metadata update authority
+        ...(values.revokeMetadataUpdate
+          ? [
+              createUpdateAuthorityInstruction({
+                programId: TOKEN_2022_PROGRAM_ID,
+                metadata: mintKeypair.publicKey,
+                oldAuthority: publicKey,
+                newAuthority: null,
+              }),
+            ]
+          : []),
       );
       transaction.partialSign(mintKeypair);
 
@@ -250,8 +339,9 @@ const TokenMint = () => {
         blockhash,
         lastValidBlockHeight,
       });
-
       console.log("Mint:", mintKeypair.publicKey.toBase58());
+      toast.success("Token created successfully.");
+      form.reset();
     } catch (error) {
       console.log(error, "token mint");
       console.dir(error, { depth: null });
@@ -400,6 +490,49 @@ const TokenMint = () => {
               />
             </div>
 
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Decimals */}
+              <FormField
+                control={form.control}
+                name="decimals"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Decimals</FormLabel>
+
+                    <FormControl>
+                      <Input type="number" min={0} max={18} {...field} />
+                    </FormControl>
+
+                    <FormDescription>
+                      Usually 6 decimals is a good default for tokens.
+                    </FormDescription>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="supply"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supply</FormLabel>
+
+                    <FormControl>
+                      <Input type="number" min={1} {...field} />
+                    </FormControl>
+
+                    <FormDescription>
+                      Usually 10,000 tokens is a good default.
+                    </FormDescription>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Description */}
             <FormField
               control={form.control}
@@ -425,27 +558,6 @@ const TokenMint = () => {
               )}
             />
 
-            {/* Decimals */}
-            <FormField
-              control={form.control}
-              name="decimals"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Decimals</FormLabel>
-
-                  <FormControl>
-                    <Input type="number" min={0} max={18} {...field} />
-                  </FormControl>
-
-                  <FormDescription>
-                    Usually 9 decimals is a good default for Solana tokens.
-                  </FormDescription>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* Freeze Authority */}
             <FormField
               control={form.control}
@@ -457,6 +569,50 @@ const TokenMint = () => {
 
                     <FormDescription>
                       Permanently remove the ability to freeze token accounts.
+                    </FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="revokeMint"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-xl border p-4">
+                  <div className="space-y-1">
+                    <FormLabel>Revoke mint authority</FormLabel>
+
+                    <FormDescription>
+                      No one will be able to create more tokens anymore.
+                    </FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="revokeMetadataUpdate"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-xl border p-4">
+                  <div className="space-y-1">
+                    <FormLabel>Revoke Metadata Update</FormLabel>
+
+                    <FormDescription>
+                      No one will be able to modify token metadata anymore.
                     </FormDescription>
                   </div>
 
