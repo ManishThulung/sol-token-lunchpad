@@ -3,7 +3,7 @@
 import TokenMint from "@/components/mint/create-token";
 import Transfer from "@/components/modals/transfer";
 import { calculateLamports } from "@/lib/lamport";
-import { TokenAsset } from "@/types/token";
+import { TokenAsset } from "@/types";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";

@@ -11,9 +11,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { mintAddress } = await context.params;
 
-    const token = await prisma.solanaToken.findUnique({
+    const token = await prisma.token.findUnique({
       where: {
-        mintAddress,
+        id: mintAddress,
       },
     });
 

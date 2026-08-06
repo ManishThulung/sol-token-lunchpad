@@ -60,6 +60,11 @@ const data = {
       url: "wallet",
       icon: Map,
     },
+    {
+      name: "Liquidity Pool",
+      url: "liquidity-pool",
+      icon: Map,
+    },
   ],
 };
 

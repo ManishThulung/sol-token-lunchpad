@@ -8,38 +8,106 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String
-  password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deleteAt  DateTime?
-  platform  LoginPlatform?
+model Token {
+  id              String   @id
+  decimals        Int
+  name            String
+  symbol          String
+  mintAuthority   String?
+  description     String?
+  imageUrl        String?
+  metadataUri     String?
+  revokeAuthority String?
 
-  tokens    SolanaToken[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  poolsAsMintA    LiquidityPool[] @relation("PoolMintA")
+  poolsAsMintB    LiquidityPool[] @relation("PoolMintB")
+  
 }
 
-model SolanaToken {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model LiquidityPool {
+  id                String @id
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mintAId           String
+  mintA             Token @relation("PoolMintA", fields: [mintAId], references: [id])
 
-  mintAddress    String @unique
-  mintAuthority  String
-  decimals       Int
-  name           String
-  symbol         String
-  description    String?
-  imageUrl       String?
-  revokeFreeze   Boolean @default(false)
+  mintBId           String
+  mintB             Token @relation("PoolMintB", fields: [mintBId], references: [id])
+
+  lpMintAddress     String
+  lpMintDecimals    Int
+  tradeFeeRate      Int
+  configId          String
+  creatorWallet     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  metrics           PoolMetrics?
+  trades            PoolTrade[]
 }
 
+model PoolMetrics {
+  id                  String   @id @default(cuid())
 
-enum LoginPlatform {
-  GOOGLE
+  reserveA            Decimal  @db.Decimal(30, 9)
+  reserveB            Decimal  @db.Decimal(30, 9)
+
+  price               Decimal  @db.Decimal(30, 12)
+
+  liquidityUsd        Decimal  @db.Decimal(30, 2)
+
+  lpSupply            Decimal  @db.Decimal(30, 9)
+  lpPrice             Decimal  @db.Decimal(30, 9)
+
+  holderCount         Int
+
+  volume24h           Decimal  @db.Decimal(30, 2)
+  volume7d            Decimal  @db.Decimal(30, 2)
+  volume30d           Decimal  @db.Decimal(30, 2)
+
+  fees24h             Decimal  @db.Decimal(30, 2)
+  fees7d              Decimal  @db.Decimal(30, 2)
+  fees30d             Decimal  @db.Decimal(30, 2)
+
+  apr24h              Decimal  @db.Decimal(10, 4)
+  apr7d               Decimal  @db.Decimal(10, 4)
+
+  updatedAt           DateTime @updatedAt
+
+  poolId              String   @unique
+  pool                LiquidityPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+}
+
+model PoolTrade {
+  id               String   @id @default(cuid())
+  signature        String   @unique
+
+  slot             BigInt
+
+  trader           String
+
+  side             TradeSide
+
+  amountIn         Decimal @db.Decimal(30, 9)
+  amountOut        Decimal @db.Decimal(30, 9)
+
+  tokenInMint      String
+  tokenOutMint     String
+
+  feeAmount        Decimal @db.Decimal(30, 9)
+
+  price            Decimal @db.Decimal(30, 12)
+
+  timestamp        DateTime
+
+  poolId           String
+  pool             LiquidityPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+}
+
+enum TradeSide {
+  BUY
+  SELL
 }

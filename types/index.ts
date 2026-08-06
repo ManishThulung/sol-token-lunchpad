@@ -92,3 +92,53 @@ export interface TokenInfo {
   decimals: number;
   token_program: string;
 }
+
+export interface Token {
+  id: string;
+  decimals: number;
+  name: string;
+  symbol: string;
+  mintAuthority: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  metadataUri: string | null;
+  revokeAuthority: string | null;
+  createdAt?: string; // ISO date string
+  updatedAt?: string; // ISO date string
+}
+export interface PoolMetrics {
+  id: string;
+  reserveA: string;
+  reserveB: string;
+  price: string;
+  liquidityUsd: string;
+  lpSupply: string;
+  lpPrice: string;
+  holderCount: number;
+  volume24h: string;
+  volume7d: string;
+  volume30d: string;
+  fees24h: string;
+  fees7d: string;
+  fees30d: string;
+  apr24h: string;
+  apr7d: string;
+  updatedAt: string; // ISO date string
+  poolId: string;
+}
+
+export interface LiquidityPoolResponse {
+  id: string;
+  mintAId: string;
+  mintBId: string;
+  lpMintAddress: string;
+  lpMintDecimals: number;
+  tradeFeeRate: number;
+  configId: string;
+  creatorWallet: string | null;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  mintA: Token;
+  mintB: Token;
+  metrics: PoolMetrics | null;
+}
