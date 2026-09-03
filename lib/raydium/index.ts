@@ -1,13 +1,13 @@
 import { Raydium, SignAllTransactions } from "@raydium-io/raydium-sdk-v2";
-
-import type { Connection, PublicKey } from "@solana/web3.js";
+import type { Connection as ConnectionType, PublicKey } from "@solana/web3.js";
+import { Connection } from "@solana/web3.js";
 
 export const createRaydium = async ({
   connection,
   owner,
   signAllTransactions,
 }: {
-  connection: Connection;
+  connection: ConnectionType;
   owner: PublicKey;
   signAllTransactions: SignAllTransactions;
   // signAllTransactions: (
@@ -26,3 +26,23 @@ export const createRaydium = async ({
     // txVersion: TxVersion.V0,
   });
 };
+
+let raydium: Raydium | null = null;
+
+export async function getRaydium() {
+  if (raydium) return raydium;
+
+  const connection = new Connection(
+    "https://api.devnet.solana.com/",
+    "confirmed",
+  );
+
+  raydium = await Raydium.load({
+    connection,
+    cluster: "devnet", // or "mainnet"
+    disableFeatureCheck: true,
+    disableLoadToken: true,
+  });
+
+  return raydium;
+}

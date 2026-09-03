@@ -6,15 +6,119 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useFetch } from "@/hooks/use-fetch";
-import { LiquidityPoolResponse } from "@/types";
+import { LiquidityPool, Token } from "@/types";
 import { ArrowRight, Droplets, Search } from "lucide-react";
-import { useState } from "react";
-import { CreateLiquidityModal } from "../../components/create-pool/page";
+import { useEffect, useState } from "react";
+import { CreateLiquidityModal } from "../../components/create-pool";
+import Link from "next/link";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { createRaydium } from "@/lib/raydium";
+import { Decimal } from "@prisma/client/runtime/client";
+import { getTokenUsdPriceFromDevnetPool } from "@/lib/sol/fetch-price";
+
+// totalLiquidity = $685.8024599142
 
 export default function LiquidityPoolsPage() {
+  const { connection } = useConnection();
+  const { signAllTransactions, publicKey } = useWallet();
   const [open, setOpen] = useState<boolean>(false);
-  const { data, loading, error } =
-    useFetch<LiquidityPoolResponse[]>("/api/pools");
+  const { data, loading, error } = useFetch<LiquidityPool[]>("/api/pools");
+
+  const handleInit = async () => {
+    if (!publicKey) return;
+    const poolId = "Aj3vqS6jvtrnbyZFP5HD77HSciHj6KWrHeyx3a8UHNHz";
+    const txId =
+      "3tZNpezHYzkqnnsHEGUsNj25C4h4nWKeRL97qEnDTTZrrNjdj5sDZKJTb2A6QHwqCnri1DwiaLps9i9pMv8x8VNt";
+    await fetch("/api/pools/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        poolId,
+        txId,
+      }),
+    });
+    return;
+
+    const raydium = await createRaydium({
+      connection,
+      owner: publicKey,
+      signAllTransactions,
+    });
+    const { poolInfo: pool, rpcData } =
+      await raydium.cpmm.getPoolInfoFromRpc(poolId);
+    console.log({ poolInfo: pool, rpcData }, "pppppppp");
+    // return;
+    console.log(
+      {
+        vaultA: rpcData.vaultA.toBase58(),
+        vaultAAmount: rpcData.vaultAAmount,
+        vaultB: rpcData.vaultB.toBase58(),
+        vaultBAmount: rpcData.vaultBAmount,
+      },
+      "vault Info",
+    );
+    return;
+    const priceAUsd = Decimal(180);
+    const priceBUsd = getTokenUsdPriceFromDevnetPool(
+      pool.mintAmountA,
+      pool.mintAmountB,
+      pool.mintB.decimals,
+    );
+    const payload: {
+      mintA: any;
+      mintB: any;
+      poolId: string;
+      lpMintAddress: string;
+      lpMintDecimals: number;
+      tradeFeeRate: number;
+      configId: string;
+      poolMintAmountA: number;
+      poolMintAmountB: number;
+      lpAmount: number;
+      priceAUsd: string;
+      priceBUsd: string;
+    } = {
+      mintA: {
+        mint: "So11111111111111111111111111111111111111112",
+        symbol: "SOL",
+        name: "Solana",
+        decimals: 9,
+        mintAuthority: null,
+        metadataUri: "https",
+        imageUrl: "null",
+      },
+      mintB: {
+        mint: "EXiikDkNei3ciSNcG82YYi2JAX5yQ6rWqtcdWxDkPLVB",
+        name: "Siuu Token",
+        symbol: "SIUU",
+        decimals: 9,
+        mintAuthority: "9PC2pb49KN4aBXzKtR2u6kDHpBTbfAwxqAovnMY3qh51",
+        metadataUri:
+          "https://sol-token-lunchpad-rho.vercel.app/api/tokens/9PC2pb49KN4aBXzKtR2u6kDHpBTbfAwxqAovnMY3qh51/metadata",
+        imageUrl: null,
+      },
+      poolId: "Aj3vqS6jvtrnbyZFP5HD77HSciHj6KWrHeyx3a8UHNHz",
+      lpMintAddress: pool.lpMint.address,
+      lpMintDecimals: pool.lpMint.decimals,
+      tradeFeeRate: pool.config.tradeFeeRate,
+      configId: pool.config.id,
+      poolMintAmountA: pool.mintAmountA,
+      poolMintAmountB: pool.mintAmountB,
+      lpAmount: pool.lpAmount,
+      priceAUsd: priceAUsd.toString(),
+      priceBUsd: priceBUsd.toString(),
+    };
+    await fetch("/api/pools", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  };
+  useEffect(() => {
+    handleInit();
+  }, [publicKey]);
 
   return (
     <div className="h-full bg-background">
@@ -153,15 +257,20 @@ export default function LiquidityPoolsPage() {
                       <div className="flex gap-3">
                         <Button
                           variant="outline"
-                          className="h-11 flex-1 rounded-xl px-4"
+                          className="h-11 w-1/2 rounded-xl px-4"
                         >
                           Add liquidity
                         </Button>
 
-                        <Button className="h-11 flex-1 rounded-xl px-4">
-                          Swap
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        <Link
+                          href={`/liquidity-pool/${pool.id.toString()}`}
+                          className="w-1/2"
+                        >
+                          <Button className="h-11 w-full rounded-xl px-4">
+                            Swap
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
                       </div>
                     </CardContent>
                   </Card>
@@ -189,77 +298,3 @@ export default function LiquidityPoolsPage() {
     </div>
   );
 }
-// const handleInit = async () => {
-//   if (!publicKey) return;
-//   const raydium = await createRaydium({
-//     connection,
-//     owner: publicKey,
-//     signAllTransactions,
-//   });
-//   const { poolInfo: pool } = await raydium.cpmm.getPoolInfoFromRpc(
-//     "BWCk1QFGJJFGP5reLiWeLauAwPWmEhXx6uCuaXhj7K7j",
-//   );
-
-//   const priceAUsd = Decimal(180);
-//   const priceBUsd = getTokenUsdPriceFromDevnetPool(
-//     pool.mintAmountA,
-//     pool.mintAmountB,
-//     pool.mintB.decimals,
-//   );
-//   const payload: {
-//     mintA: Omit<TokenMetadataResponse, "supply" | "price">;
-//     mintB: Omit<TokenMetadataResponse, "supply" | "price">;
-//     poolId: string;
-//     lpMintAddress: string;
-//     lpMintDecimals: number;
-//     tradeFeeRate: number;
-//     configId: string;
-//     poolMintAmountA: number;
-//     poolMintAmountB: number;
-//     lpAmount: number;
-//     priceAUsd: string;
-//     priceBUsd: string;
-//   } = {
-//     mintA: {
-//       mint: "So11111111111111111111111111111111111111112",
-//       symbol: "SOL",
-//       name: "Solana",
-//       balance: 12.84,
-//       decimals: 9,
-//       mintAuthority: null,
-//       metadataUri: "https",
-//       imageUrl: "null",
-//     },
-//     mintB: {
-//       mint: "8zRsA8Kdr5ynt7Pj3HRP6X5AAe5AeU193AiMZdTDKE2r",
-//       name: "Football World Cup",
-//       symbol: "WCUP",
-//       decimals: 6,
-//       mintAuthority: null,
-//       metadataUri:
-//         "https://sol-token-lunchpad-rho.vercel.app/api/tokens/8zRsA8Kdr5ynt7Pj3HRP6X5AAe5AeU193AiMZdTDKE2r/metadata",
-//       imageUrl: null,
-//       balance: 0,
-//     },
-//     poolId: "BWCk1QFGJJFGP5reLiWeLauAwPWmEhXx6uCuaXhj7K7j",
-//     lpMintAddress: pool.lpMint.address,
-//     lpMintDecimals: pool.lpMint.decimals,
-//     tradeFeeRate: pool.config.tradeFeeRate,
-//     configId: pool.config.id,
-//     poolMintAmountA: pool.mintAmountA,
-//     poolMintAmountB: pool.mintAmountB,
-//     lpAmount: pool.lpAmount,
-//     priceAUsd: priceAUsd.toString(),
-//     priceBUsd: priceBUsd.toString(),
-//   };
-//   await fetch("/api/pools", {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify(payload),
-//   });
-// };
-// useEffect(() => {
-//   handleInit();
-// }, [publicKey]);

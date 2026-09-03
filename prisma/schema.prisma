@@ -85,6 +85,8 @@ model PoolTrade {
   id               String   @id @default(cuid())
   signature        String   @unique
 
+  usdVolume        Decimal @db.Decimal(30, 2)
+
   slot             BigInt
 
   trader           String

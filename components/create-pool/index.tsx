@@ -54,44 +54,22 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>;
 
-// const TOKENS: TokenMetadataResponse[] = [
-//   {
-//     mint: "So11111111111111111111111111111111111111112",
-//     symbol: "SOL",
-//     name: "Solana",
-//     // balance: 12.84,
-//     // price: 180.24,
-//     // supply: "1",
-//     decimals: 9,
-//     mintAuthority: null,
-//     metadataUri: "https",
-//     imageUrl: "/file.svg",
-//   },
-//   {
-//     mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-//     symbol: "USDC",
-//     name: "USD Coin",
-//     // balance: 4820,
-//     // price: 1,
-//     // supply: "1",
-//     decimals: 9,
-//     mintAuthority: null,
-//     metadataUri: "https",
-//     imageUrl: "/file.svg",
-//   },
-//   {
-//     mint: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
-//     symbol: "BONK",
-//     name: "Bonk",
-//     // balance: 12000000,
-//     // price: 0.000021,
-//     // supply: "1",
-//     decimals: 9,
-//     mintAuthority: null,
-//     metadataUri: "https",
-//     imageUrl: "/file.svg",
-//   },
-// ];
+const TOKENS = [
+  {
+    id: "So11111111111111111111111111111111111111112",
+    symbol: "SOL",
+    name: "Solana",
+    // balance: 12.84,
+    // price: 180.24,
+    // supply: "1",
+    decimals: 9,
+    mintAuthority: null,
+    metadataUri: "https",
+    imageUrl: "/file.svg",
+    description: "sd",
+    revokeAuthority: null,
+  },
+];
 
 function TokenSelect({
   value,
@@ -586,9 +564,10 @@ export function CreateLiquidityModal({
 
   useEffect(() => {
     if (!data) return;
-    setAllTokens(data);
+    setAllTokens([...data, ...TOKENS]);
   }, [data]);
 
+  console.log(allTokens, "aaaaaaaaa");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger className="h-11 cursor-pointer px-5 flex gap-2 items-center bg-black text-white border rounded-sm">

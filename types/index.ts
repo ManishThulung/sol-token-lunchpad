@@ -127,7 +127,7 @@ export interface PoolMetrics {
   poolId: string;
 }
 
-export interface LiquidityPoolResponse {
+export interface LiquidityPool {
   id: string;
   mintAId: string;
   mintBId: string;
