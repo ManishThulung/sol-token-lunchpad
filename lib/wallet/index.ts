@@ -36,10 +36,7 @@ export const createOrGetATA = async (
       TOKEN_2022_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
-    console.log("1111", ata);
-    // Check whether ATA already exists
     const accountInfo = await connection.getAccountInfo(ata);
-    console.log("22222222");
     if (accountInfo) {
       console.log("ATA already exists:", ata.toBase58());
       return ata;

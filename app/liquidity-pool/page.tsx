@@ -9,7 +9,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import { LiquidityPool, Token } from "@/types";
 import { ArrowRight, Droplets, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CreateLiquidityModal } from "../../components/create-pool";
+import { CreateLiquidityModal } from "../../components/pool/create-pool";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { createRaydium } from "@/lib/raydium";
@@ -17,7 +17,7 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { getTokenUsdPriceFromDevnetPool } from "@/lib/sol/fetch-price";
 
 // totalLiquidity = $685.8024599142
-
+// const txSolOut="3A8NyJf2uB4KeZwmccgC7HaMG84pb6Rqr52W2iJyvcWKj2uBURxnm3YFXq83D4hyYWarQN7cGKkLusKDq8Z14dyJ"
 export default function LiquidityPoolsPage() {
   const { connection } = useConnection();
   const { signAllTransactions, publicKey } = useWallet();
@@ -27,17 +27,17 @@ export default function LiquidityPoolsPage() {
   const handleInit = async () => {
     if (!publicKey) return;
     const poolId = "Aj3vqS6jvtrnbyZFP5HD77HSciHj6KWrHeyx3a8UHNHz";
-    const txId =
-      "3tZNpezHYzkqnnsHEGUsNj25C4h4nWKeRL97qEnDTTZrrNjdj5sDZKJTb2A6QHwqCnri1DwiaLps9i9pMv8x8VNt";
-    await fetch("/api/pools/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        poolId,
-        txId,
-      }),
-    });
-    return;
+    // const txId =
+    //   "3tZNpezHYzkqnnsHEGUsNj25C4h4nWKeRL97qEnDTTZrrNjdj5sDZKJTb2A6QHwqCnri1DwiaLps9i9pMv8x8VNt"; // sol in
+    // await fetch("/api/pools/sync", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     poolId,
+    //     txId,
+    //   }),
+    // });
+    // return;
 
     const raydium = await createRaydium({
       connection,
@@ -47,7 +47,7 @@ export default function LiquidityPoolsPage() {
     const { poolInfo: pool, rpcData } =
       await raydium.cpmm.getPoolInfoFromRpc(poolId);
     console.log({ poolInfo: pool, rpcData }, "pppppppp");
-    // return;
+    return;
     console.log(
       {
         vaultA: rpcData.vaultA.toBase58(),
@@ -57,7 +57,7 @@ export default function LiquidityPoolsPage() {
       },
       "vault Info",
     );
-    return;
+    // return;
     const priceAUsd = Decimal(180);
     const priceBUsd = getTokenUsdPriceFromDevnetPool(
       pool.mintAmountA,
@@ -116,12 +116,13 @@ export default function LiquidityPoolsPage() {
       body: JSON.stringify(payload),
     });
   };
-  useEffect(() => {
-    handleInit();
-  }, [publicKey]);
+
+  // useEffect(() => {
+  //   handleInit();
+  // }, [publicKey]);
 
   return (
-    <div className="h-full bg-background">
+    <div className="h-full">
       <div className="mx-auto w-full">
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -143,7 +144,7 @@ export default function LiquidityPoolsPage() {
         </div>
 
         {/* Search + filters */}
-        <div className="mb-8 rounded-3xl border bg-card p-5">
+        {/* <div className="mb-8 rounded-3xl border bg-card p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -166,7 +167,7 @@ export default function LiquidityPoolsPage() {
               </Badge>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {loading ? (
           <>loading</>
@@ -255,15 +256,20 @@ export default function LiquidityPoolsPage() {
                       </div>
 
                       <div className="flex gap-3">
-                        <Button
-                          variant="outline"
-                          className="h-11 w-1/2 rounded-xl px-4"
+                        <Link
+                          href={`/liquidity-pool/deposit/${pool.id.toString()}`}
+                          className="w-1/2"
                         >
-                          Add liquidity
-                        </Button>
+                          <Button
+                            variant="outline"
+                            className="h-11 w-1/2 rounded-xl px-4"
+                          >
+                            Add liquidity
+                          </Button>
+                        </Link>
 
                         <Link
-                          href={`/liquidity-pool/${pool.id.toString()}`}
+                          href={`/liquidity-pool/swap/${pool.id.toString()}`}
                           className="w-1/2"
                         >
                           <Button className="h-11 w-full rounded-xl px-4">

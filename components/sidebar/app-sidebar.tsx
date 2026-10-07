@@ -52,17 +52,17 @@ const data = {
     },
     {
       name: "Mint Authority",
-      url: "mint-authority",
+      url: "/mint-authority",
       icon: PieChart,
     },
     {
       name: "Wallet",
-      url: "wallet",
+      url: "/wallet",
       icon: Map,
     },
     {
       name: "Liquidity Pool",
-      url: "liquidity-pool",
+      url: "/liquidity-pool",
       icon: Map,
     },
   ],

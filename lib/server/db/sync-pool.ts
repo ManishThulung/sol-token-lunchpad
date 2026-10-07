@@ -625,7 +625,7 @@ export async function syncPool(poolId: string, txId: string) {
     180,
   );
   const baseTokenTrade = findBaseTokenTrade(
-    tx?.meta?.innerInstructions,
+    tx?.meta?.innerInstructions as any,
     poolInfo.mintA.address,
   );
   const tradeVolumeInUsd = baseTokenTrade

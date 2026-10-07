@@ -3,7 +3,7 @@
 import Transfer from "@/components/modals/transfer";
 import { calculateLamports } from "@/lib/lamport";
 import { TokenAsset } from "@/types";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 

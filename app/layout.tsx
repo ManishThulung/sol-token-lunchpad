@@ -64,7 +64,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         // className={`max-w-[1440px] m-auto my-5 ${geistMono.variable} antialiased`}
-        className={`w-full m-auto ${geistMono.variable} antialiased`}
+        className={`w-full m-auto ${geistMono.variable} antialiased bg-[#f5f5f5]`}
       >
         <SidebarProvider>
           <AppSidebar />

@@ -24,11 +24,8 @@ import { calculateLamports } from "@/lib/lamport";
 import { createOrGetATA } from "@/lib/wallet";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
   createMintToCheckedInstruction,
   createTransferCheckedInstruction,
-  getAssociatedTokenAddress,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
@@ -162,7 +159,6 @@ const Transfer = ({
           toast.error("Mint address is required!");
           return;
         }
-        console.log(publicKey.toBase58(), "dddddddddddddddddddddddd");
         const mintPublicKey = new PublicKey(mint);
 
         const ata = await createOrGetATA(
